@@ -1,10 +1,9 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session
 from langchain_openai import ChatOpenAI
 from langchain_community.utilities import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 from langchain import hub
 from dotenv import load_dotenv
-import getpass
 import os
 
 # Load environment variables from the .env file
@@ -12,6 +11,8 @@ load_dotenv('.env')
 
 # Flask app
 app = Flask(__name__)
+# Replace with a unique, random string
+app.secret_key = 'alksdjgalskjncalksd-asdglökasdc-asdfsw'
 
 # Access the variables
 host = os.environ.get('HOST')
@@ -26,9 +27,6 @@ open_ai_key = os.environ.get('OPEN_AI_KEY')
 pg_uri = f"postgresql+psycopg2://{username}:{
     password}@{host}:{port}/{database}"
 db = SQLDatabase.from_uri(pg_uri)
-
-# OpenAI API key
-# OPENAI_API_KEY = "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"
 
 
 # Prompt template
@@ -60,24 +58,31 @@ The question: {question}"""
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    result = None
+    if 'conversation' not in session:
+        session['conversation'] = []  # Initialize conversation history
+
     if request.method == 'POST':
         question = request.form['question']
-        selected_model = request.form['selected_model']
+        # selected_model = request.form['selected_model']
 
         # Create the LLM with the selected model
-        llm = ChatOpenAI(temperature=0, openai_api_key=open_ai_key,
-                         model="gpt-3.5-turbo"
+        llm = ChatOpenAI(
+            # hard coded cause of syntax error
+            temperature=0, openai_api_key=open_ai_key, model_name='gpt-3.5-turbo')
 
         # Create the database chain with the new LLM
-        db_chain=SQLDatabaseChain(
-            llm=llm, database=db, verbose=True, top_k=3, use_query_checker=True)
+        db_chain = SQLDatabaseChain(
+            llm=llm, database=db, verbose=True, top_k=3)
 
         # Run the query and get the result
-        result=db_chain.run(PROMPT.format(
-            question=question, dialect="postgresql", top_k=3))
+        result = db_chain.run(PROMPT.format(
+            question=question, dialect='postgresql', top_k=3))
 
-    return render_template('index.html', result=result)
+        # Save the question and result to the conversation history
+        session['conversation'].append(
+            {'question': question, 'result': result})
+
+    return render_template('index.html', conversation=session['conversation'])
 
 
 if __name__ == '__main__':
