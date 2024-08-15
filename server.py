@@ -32,11 +32,13 @@ db = SQLDatabase.from_uri(pg_uri)
 # Prompt template
 PROMPT = """You are an agent designed to interact with a SQL database.
 
-Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer with the value. Don't put the SQL-Query in ```. Answer in the users language.
 
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
 
 You can order the results by a relevant column to return the most interesting examples in the database.
+
+Handle NULL Values correctly. If a column has NULL values, you should not return those rows in the results.
 
 Never query for all the columns from a specific table, only ask for the relevant columns given the question.
 
@@ -63,12 +65,12 @@ def index():
 
     if request.method == 'POST':
         question = request.form['question']
-        # selected_model = request.form['selected_model']
+        selected_model = request.form['selected_model']
 
         # Create the LLM with the selected model
         llm = ChatOpenAI(
             # hard coded cause of syntax error
-            temperature=0, openai_api_key=open_ai_key, model_name='gpt-3.5-turbo')
+            temperature=0, openai_api_key=open_ai_key, model_name=selected_model)
 
         # Create the database chain with the new LLM
         db_chain = SQLDatabaseChain(
@@ -86,4 +88,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001, host='0.0.0.0')
