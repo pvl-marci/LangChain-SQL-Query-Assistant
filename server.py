@@ -12,7 +12,7 @@ load_dotenv('.env')
 # Flask app
 app = Flask(__name__)
 # Replace with a unique, random string
-app.secret_key = 'alksdjgalskjncalksd-asdglökasdc-asdfsw'
+app.secret_key = os.environ.get('SESSION_KEY')
 
 # Access the variables
 host = os.environ.get('HOST')
