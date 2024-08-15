@@ -55,6 +55,7 @@ Before running the app, you'll need to set up a Python virtual environment and i
     PASSWORD=your_database_password
     DATABASE=your_database_name
     OPEN_AI_KEY=your_openai_api_key
+    SESSION_KEY=random_str
     ```
 
     Replace the placeholders with your actual database and API credentials.
